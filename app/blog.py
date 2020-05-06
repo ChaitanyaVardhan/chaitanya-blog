@@ -40,12 +40,12 @@ def create():
     return render_template('blog/create.html')
 
 
-@bp.route('/update', methods=['GET', 'POST'])
+@bp.route('/<int:id>/update', methods=['GET', 'POST'])
 @login_required
 def update(id):
     post = get_post(id)
 
-    if request.method = "POST":
+    if request.method == "POST":
         title = request.form['title']
         body = request.form['body']
 
@@ -69,7 +69,7 @@ def update(id):
 
 
 @bp.route('/<int:id>/delete', methods=['POST'])
-@login_required()
+@login_required
 def delete(id):
     get_post(id)
     db = get_db()
