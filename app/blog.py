@@ -3,6 +3,7 @@ from flask import(
     render_template, request
 )
 
+from werkzeug.exceptions import abort
 from app.db import get_db
 
 from app.auth import login_required
@@ -33,7 +34,7 @@ def create():
         db = get_db()
         db.execute(
             'INSERT INTO Post (title, body, author_id) '
-            'VALUE (?, ?, ?) ', (title, body, g.user['id'])
+            'VALUES (?, ?, ?) ', (title, body, g.user['id'])
         )
         db.commit()
         return redirect(url_for('blog.index'))
@@ -59,7 +60,7 @@ def update(id):
         else:
             db = get_db()
             db.execute(
-                'Update Post SET title = ?, body = ?, '
+                'Update Post SET title = ?, body = ? '
                 'WHERE id = ?', (title, body, id)
             )
             db.commit()
@@ -76,3 +77,19 @@ def delete(id):
     db.execute('DELETE FROM Post WHERE id = ?', (id,))
     db.commit()
     return redirect(url_for('blog.index'))
+
+
+def get_post(id, check_author=True):
+    post = get_db().execute(
+        'SELECT p.id, title, body, created, author_id, username '
+        'FROM Post p JOIN User u ON p.author_id = u.id '
+        'WHERE p.id = ?',(id,)
+    ).fetchone()
+
+    if post is None:
+        abort(404, "Post id {0} doesn't exist.".format(id) )
+
+    if check_author and post['author_id'] != g.user['id']:
+        abort(403)
+
+    return post
